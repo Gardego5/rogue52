@@ -1,7 +1,8 @@
 import React from 'react';
-import { Display, Scheduler } from 'rot-js';
+import { Display, Map } from 'rot-js';
 
 import tileSetImage from '../../media/1bit_2x.png';
+import { keyToCoords } from '../../utils/MapUtils';
 
 class Game {
   options = {
@@ -50,18 +51,22 @@ class Game {
 
   constructor() {
     this.display = new Display(this.options);
+
+    this.attachDisplay = this.attachDisplay.bind(this);
+    this._generateMap = this._generateMap.bind(this);
+    this._drawWholeMap = this._drawWholeMap.bind(this);
+
+    this._generateMap();
   }
   
   attachDisplay() {
     const attachPoint = document.getElementById('game-display');
-
     attachPoint.appendChild(this.display.getContainer());
-    this.display.draw(5, 5, 'w_N')
+    setTimeout(this._drawWholeMap, 10);
   }
 
   neighborHash(location) {
-    const x = location[0];
-    const y = location[1];
+    let {x, y} = keyToCoords(location);
     let hash = 0;
     const places = [
       [x - 1, y - 1], [x    , y - 1], [x + 1, y - 1],
@@ -76,6 +81,28 @@ class Game {
 
     return hash;
   }
+
+  _generateMap() {
+    let digger = new Map.Digger(this.options.width, this.options.height);
+    let freeCells = [];
+
+    let digCallback = function(x, y, value) {
+      if (value) return;
+
+      let key = x+','+y;
+      this.map[key] = '.';
+      freeCells.push(key);
+    }
+
+    digger.create(digCallback.bind(this));
+  }
+
+  _drawWholeMap() {
+    for (let key in this.map) {
+      let {x, y} = keyToCoords(key);
+      this.display.draw(x, y, this.map[key]);
+    }
+  }
 }
 
 export default class GameComponent extends React.Component {
@@ -83,7 +110,7 @@ export default class GameComponent extends React.Component {
     super(props);
 
     this.state = {
-      game: new Game,
+      game: new Game(),
     }
   }
 

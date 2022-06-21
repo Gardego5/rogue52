@@ -1,5 +1,7 @@
 body {
+  color: white;
   font-family: 'Joan', serif;
+  background-color: #222;
 }
 
 .flex-column {
